@@ -271,7 +271,7 @@ function addUrlRow(val='',focus=true){
   const row=document.createElement('div');
   row.className='url-row';
   row.innerHTML=`
-    <input type="url" class="url-input" placeholder="https://www.hurriyet.com.tr" value="${esc(val)}"/>
+    <input type="url" class="url-input" placeholder="https://arkeofili.com/" value="${esc(val)}"/>
     <button class="btn-remove" title="Kaldır">✕</button>`;
   const input=row.querySelector('input');
   row.querySelector('.btn-remove').onclick=()=>{row.remove();saveUrls();};
@@ -290,8 +290,8 @@ function loadSavedUrls(){
     }
   }catch(_){}
   // defaults
-  addUrlRow('https://www.hurriyet.com.tr',false);
-  addUrlRow('https://www.ntv.com.tr',false);
+  addUrlRow('https://arkeofili.com/',false);
+  addUrlRow('https://www.sciencedaily.com/news/fossils_ruins/anthropology/',false);
 }
 
 document.getElementById('btnAdd').onclick=()=>{addUrlRow();saveUrls();};
@@ -350,8 +350,24 @@ async function fetchSite(url){
   try{ mainHtml=await fetchText(url); }catch(_){}
 
   const runStandard = async () => {
-    const rssFromHtml=extractRssLinks(mainHtml,base);
-    const candidates=[...rssFromHtml,...knownRssPatterns(url),...RSS_PATHS.map(p=>base+p)];
+    let rssFromHtml=extractRssLinks(mainHtml,base);
+    
+    // Alt sayfadaysak, genel RSS'leri eleyip sadece bu sayfaya ait olanları tut
+    try {
+      const uObj = new URL(url);
+      const path = uObj.pathname.replace(/\/$/, '');
+      if(path.length > 1) {
+         const specificRss = rssFromHtml.filter(link => {
+            try { return new URL(link).pathname.includes(path); } catch { return false; }
+         });
+         // Sayfaya özel RSS varsa sadece onu yarışa sok, yoksa HTML'dekileri (ana sayfa rss'leri) yoksay
+         rssFromHtml = specificRss.length > 0 ? specificRss : [];
+      }
+    } catch(e) {}
+
+    const cleanUrl = url.replace(/\/$/, '');
+    // RSS_PATHS'i base yerine doğrudan url'ye ekleyerek alt sayfa RSS'lerini (ör: url/feed) bulmasını sağla
+    const candidates=[...new Set([...rssFromHtml,...knownRssPatterns(url),...RSS_PATHS.map(p=>cleanUrl+p)])];
     try {
       return await Promise.any(candidates.map(async target => {
         const xml=await fetchText(target);
@@ -585,6 +601,7 @@ function extractRssLinks(html,base){
   while((m=re.exec(html))!==null){
     const tag=m[0];
     if(!/rss|atom|feed/i.test(tag)) continue;
+    if(/comments?/i.test(tag)) continue; // Yorum (comment) feed'lerini atla
     const hrefMatch=tag.match(/href=["']([^"']+)["']/);
     if(!hrefMatch) continue;
     let href=hrefMatch[1];
@@ -652,18 +669,6 @@ function scrapeHTML(html,url){
     }catch(_){}
   });
 
-  // ── B) Open Graph / meta tags for the page itself ─────────
-  // (useful when URL is an article page)
-  if(items.length===0){
-    const ogTitle=metaContent(doc,'og:title')||metaContent(doc,'twitter:title')||doc.title||'';
-    const ogDesc=stripHTML(metaContent(doc,'og:description')||metaContent(doc,'description')||'').slice(0,240);
-    const canonical=doc.querySelector('link[rel=canonical]')?.href||url;
-    if(ogTitle&&!seen.has(canonical)){
-      seen.add(canonical);
-      items.push({title:ogTitle.slice(0,120),link:canonical,desc:ogDesc,date:0,source:src,color});
-    }
-  }
-
   // ── C) Heuristic link scraping ─────────────────────────────
   const SKIP_NAV=new Set(['nav','header','footer','aside']);
   // priority selectors → broad selectors
@@ -679,6 +684,7 @@ function scrapeHTML(html,url){
     // Drupal/ScienceDaily
     '.field-title a','.views-field-title a',
     '[class*="story"] a','[class*="headline"] a',
+    '.latest-head a',
     'h2 a','h3 a'
   ];
 
@@ -719,6 +725,19 @@ function scrapeHTML(html,url){
     });
     if(items.length>=40) break;
   }
+
+  // ── B) Open Graph / meta tags for the page itself ─────────
+  // Eğer sayfada hiç makale linki bulamadıysak, sayfanın kendisini bir makale olarak değerlendir
+  if(items.length===0){
+    const ogTitle=metaContent(doc,'og:title')||metaContent(doc,'twitter:title')||doc.title||'';
+    const ogDesc=stripHTML(metaContent(doc,'og:description')||metaContent(doc,'description')||'').slice(0,240);
+    const canonical=doc.querySelector('link[rel=canonical]')?.href||url;
+    if(ogTitle&&!seen.has(canonical)){
+      seen.add(canonical);
+      items.push({title:ogTitle.slice(0,120),link:canonical,desc:ogDesc,date:0,source:src,color});
+    }
+  }
+
   return items;
 }
 
@@ -935,7 +954,14 @@ function setScanning(on){
 function setProgress(p){document.getElementById('progressFill').style.width=p+'%'}
 function setStatus(html){document.getElementById('statusText').innerHTML=html}
 
-function hostname(url){try{return new URL(url).hostname.replace('www.','')}catch{return url}}
+function hostname(url){
+  try{
+    const u=new URL(url);
+    let name=u.hostname.replace('www.','') + (u.pathname==='/'?'':u.pathname);
+    if(name.endsWith('/')) name=name.slice(0,-1);
+    return name;
+  }catch{return url;}
+}
 function baseUrl(url){try{const u=new URL(url);return u.origin}catch{return url}}
 
 function text2(el,tag){
