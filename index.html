@@ -708,12 +708,15 @@ function scrapeHTML(html,url){
       if(seen.has(href)) return;
       seen.add(href);
       // extract description from surrounding context
-      const parent=a.closest('article')||a.closest('[class*="card"]')||a.closest('[class*="item"]')||a.parentElement;
+      let parent=a.closest('article')||a.closest('[class*="card"]')||a.closest('[class*="item"]');
+      if(!parent && a.parentElement) {
+        parent = a.parentElement.parentElement;
+        if(parent && parent.tagName === 'BODY') parent = a.parentElement;
+      }
       let desc='';
       if(parent){
-        // prefer a <p> that isn't the link itself
-        const p=[...parent.querySelectorAll('p')].find(p=>!p.contains(a));
-        if(p) desc=p.textContent.replace(/\s+/g,' ').trim().slice(0,240);
+        const descEl=[...parent.querySelectorAll('p, [class*="summary"], [class*="desc"], [class*="excerpt"]')].find(el=>!el.contains(a));
+        if(descEl) desc=descEl.textContent.replace(/\s+/g,' ').trim().slice(0,240);
       }
       // try to find a date nearby
       let date=0;
