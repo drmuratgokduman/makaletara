@@ -1,0 +1,977 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1.0"/>
+<title>MakaleTara – Haber Toplayıcı</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0a0b0f;
+  --surface:#13141a;
+  --surface2:#1c1e27;
+  --border:#2a2d3a;
+  --accent:#6c63ff;
+  --accent2:#a78bfa;
+  --text:#e8e9f0;
+  --muted:#6b7280;
+  --success:#10b981;
+  --danger:#ef4444;
+  --warn:#f59e0b;
+  --card-bg:rgba(28,30,39,0.85);
+}
+body{background:var(--bg);color:var(--text);font-family:'Inter',sans-serif;min-height:100vh;overflow-x:hidden}
+body::before{content:'';position:fixed;top:-200px;right:-200px;width:600px;height:600px;background:radial-gradient(circle,rgba(108,99,255,.12) 0%,transparent 70%);pointer-events:none;z-index:0}
+body::after{content:'';position:fixed;bottom:-200px;left:-200px;width:500px;height:500px;background:radial-gradient(circle,rgba(167,139,250,.08) 0%,transparent 70%);pointer-events:none;z-index:0}
+
+header{position:relative;z-index:10;padding:32px 40px 0;display:flex;align-items:center;gap:16px}
+.logo-icon{width:44px;height:44px;background:linear-gradient(135deg,var(--accent),var(--accent2));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:22px;box-shadow:0 0 24px rgba(108,99,255,.4)}
+.logo-text{font-size:24px;font-weight:800;background:linear-gradient(135deg,#fff,var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.logo-sub{font-size:12px;color:var(--muted);margin-top:2px}
+
+main{position:relative;z-index:10;max-width:1100px;margin:0 auto;padding:32px 24px 60px}
+
+/* INPUT PANEL */
+.panel{background:var(--card-bg);border:1px solid var(--border);border-radius:20px;padding:28px;backdrop-filter:blur(20px);margin-bottom:28px}
+.panel-title{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.08em;margin-bottom:18px}
+.url-list{display:flex;flex-direction:column;gap:10px;margin-bottom:16px}
+.url-row{display:flex;gap:10px;align-items:center}
+.url-input{flex:1;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:11px 16px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;transition:border .2s,box-shadow .2s}
+.url-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(108,99,255,.15)}
+.url-input::placeholder{color:var(--muted)}
+.btn-remove{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.25);color:var(--danger);border-radius:8px;width:36px;height:36px;cursor:pointer;font-size:18px;display:flex;align-items:center;justify-content:center;transition:all .2s;flex-shrink:0}
+.btn-remove:hover{background:rgba(239,68,68,.2)}
+.btn-add{background:transparent;border:1px dashed var(--border);border-radius:10px;color:var(--muted);padding:10px;width:100%;cursor:pointer;font-size:13px;font-family:'Inter',sans-serif;transition:all .2s;display:flex;align-items:center;justify-content:center;gap:6px}
+.btn-add:hover{border-color:var(--accent);color:var(--accent)}
+
+.actions{display:flex;gap:12px;margin-top:20px;flex-wrap:wrap;align-items:center}
+.btn-scan{background:linear-gradient(135deg,var(--accent),var(--accent2));border:none;border-radius:12px;color:#fff;padding:13px 32px;font-size:15px;font-weight:600;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:8px;transition:all .25s;box-shadow:0 4px 20px rgba(108,99,255,.35)}
+.btn-scan:hover{transform:translateY(-2px);box-shadow:0 8px 28px rgba(108,99,255,.5)}
+.btn-scan:active{transform:translateY(0)}
+.btn-scan:disabled{opacity:.5;cursor:not-allowed;transform:none}
+.btn-clear{background:var(--surface);border:1px solid var(--border);border-radius:12px;color:var(--muted);padding:13px 24px;font-size:14px;font-weight:500;font-family:'Inter',sans-serif;cursor:pointer;transition:all .2s}
+.btn-clear:hover{border-color:var(--danger);color:var(--danger)}
+
+/* FILTER BAR */
+.filter-bar{display:flex;gap:12px;align-items:center;margin-bottom:20px;flex-wrap:wrap}
+.search-box{flex:1;min-width:200px;background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:10px 16px;color:var(--text);font-size:14px;font-family:'Inter',sans-serif;outline:none;backdrop-filter:blur(10px);transition:border .2s}
+.search-box:focus{border-color:var(--accent)}
+.search-box::placeholder{color:var(--muted)}
+.source-filter{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;backdrop-filter:blur(10px)}
+.sort-filter{background:var(--card-bg);border:1px solid var(--border);border-radius:10px;padding:10px 14px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;cursor:pointer;backdrop-filter:blur(10px)}
+.result-count{font-size:13px;color:var(--muted);margin-left:auto}
+
+/* STATUS */
+.status-bar{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:14px 20px;margin-bottom:20px;display:none;align-items:center;gap:12px;backdrop-filter:blur(10px)}
+.status-bar.active{display:flex}
+.spinner{width:18px;height:18px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .7s linear infinite;flex-shrink:0}
+@keyframes spin{to{transform:rotate(360deg)}}
+.status-text{font-size:13px;color:var(--muted)}
+.status-text strong{color:var(--text)}
+.progress-bar{flex:1;height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s ease;width:0%}
+
+/* CARDS */
+.news-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(320px,1fr));gap:18px}
+.news-card{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;overflow:hidden;cursor:pointer;text-decoration:none;display:block;transition:all .25s;backdrop-filter:blur(12px);position:relative;animation:fadeUp .4s ease both}
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+.news-card:hover{border-color:rgba(108,99,255,.4);transform:translateY(-4px);box-shadow:0 12px 32px rgba(0,0,0,.4)}
+.news-card:hover .card-arrow{opacity:1;transform:translateX(0)}
+.card-source-bar{height:3px;width:100%}
+.card-body{padding:18px}
+.card-meta{display:flex;align-items:center;gap:8px;margin-bottom:10px;flex-wrap:wrap}
+.card-source{font-size:11px;font-weight:600;color:var(--accent2);text-transform:uppercase;letter-spacing:.06em;background:rgba(167,139,250,.1);padding:3px 8px;border-radius:4px}
+.card-date{font-size:11px;color:var(--muted)}
+.card-title{font-size:15px;font-weight:600;color:var(--text);line-height:1.5;margin-bottom:8px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.card-desc{font-size:13px;color:var(--muted);line-height:1.6;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.card-footer{padding:12px 18px;border-top:1px solid rgba(255,255,255,.04);display:flex;align-items:center;justify-content:space-between}
+.card-link{font-size:12px;color:var(--accent);font-weight:500;display:flex;align-items:center;gap:4px}
+.card-arrow{opacity:0;transform:translateX(-4px);transition:all .2s;display:inline-block}
+
+/* EMPTY / ERROR */
+.empty-state{text-align:center;padding:80px 20px;color:var(--muted)}
+.empty-icon{font-size:56px;margin-bottom:16px;opacity:.5}
+.empty-title{font-size:18px;font-weight:600;color:var(--text);margin-bottom:8px}
+.empty-desc{font-size:14px;line-height:1.6}
+.error-tag{background:rgba(239,68,68,.1);border:1px solid rgba(239,68,68,.2);color:var(--danger);border-radius:8px;padding:10px 16px;font-size:13px;margin-bottom:16px;display:flex;align-items:center;gap:8px}
+
+/* TOAST */
+.toast-container{position:fixed;bottom:24px;right:24px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:12px 18px;font-size:13px;color:var(--text);box-shadow:0 8px 24px rgba(0,0,0,.5);animation:slideIn .3s ease;display:flex;align-items:center;gap:8px;min-width:260px}
+.toast.success{border-color:rgba(16,185,129,.3)}
+.toast.error{border-color:rgba(239,68,68,.3)}
+@keyframes slideIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+
+.source-section{margin-bottom:36px}
+.source-header{display:flex;align-items:center;gap:10px;padding:14px 18px;background:var(--card-bg);border:1px solid var(--border);border-left:4px solid var(--accent);border-radius:12px;margin-bottom:16px;backdrop-filter:blur(10px)}
+.source-icon{font-size:18px}
+.source-title{font-size:16px;font-weight:700;color:var(--text)}
+.source-badge{font-size:12px;color:var(--muted);background:var(--surface);padding:3px 10px;border-radius:20px;margin-left:auto}
+.ai-badge{font-size:11px;background:rgba(108,99,255,.15);color:var(--accent2);padding:3px 8px;border-radius:4px;margin-left:6px}
+.priority-row{display:flex;align-items:center;gap:10px;padding:10px 0 0;flex-wrap:wrap}
+.priority-label{font-size:13px;color:var(--muted)}
+.chip-area{display:flex;align-items:center;gap:6px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px 10px;min-height:38px;cursor:text}
+.chip-area:focus-within{border-color:var(--accent)}
+.chip{display:inline-flex;align-items:center;gap:5px;background:rgba(108,99,255,.18);color:var(--accent2);border-radius:20px;padding:3px 10px;font-size:12px;font-weight:500}
+.chip-del{cursor:pointer;opacity:.6;font-size:14px;line-height:1}
+.chip-del:hover{opacity:1}
+.chip-input{background:none;border:none;outline:none;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;min-width:120px;flex:1}
+.chip-input::placeholder{color:var(--muted)}
+.kw-section{margin-top:14px}
+.kw-label{font-size:13px;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-bottom:8px}
+.highlight{background:rgba(245,158,11,.3);border-radius:2px;padding:0 1px}
+.settings-section{border-top:1px solid var(--border);margin-top:20px;padding-top:16px}
+.settings-toggle-btn{background:none;border:none;color:var(--muted);font-size:13px;font-family:'Inter',sans-serif;cursor:pointer;display:flex;align-items:center;gap:6px;padding:0;transition:color .2s}
+.settings-toggle-btn:hover{color:var(--text)}
+.settings-body{margin-top:14px;display:flex;flex-direction:column;gap:12px}
+.ai-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.ai-name{font-size:13px;font-weight:500;color:var(--text);min-width:150px}
+.ai-key-input{flex:1;min-width:120px;background:var(--surface);border:1px solid var(--border);border-radius:8px;padding:8px 12px;color:var(--text);font-size:13px;font-family:'Inter',sans-serif;outline:none;transition:border .2s}
+.ai-key-input:focus{border-color:var(--accent)}
+.key-link{color:var(--muted);font-size:18px;text-decoration:none;transition:color .2s;flex-shrink:0}
+.key-link:hover{color:var(--accent2)}
+.settings-note{font-size:12px;color:var(--muted);line-height:1.5}
+.toggle-switch{position:relative;display:inline-block;width:38px;height:22px;flex-shrink:0}
+.toggle-switch input{opacity:0;width:0;height:0}
+.slider{position:absolute;cursor:pointer;inset:0;background:var(--border);border-radius:22px;transition:.3s}
+.slider:before{position:absolute;content:'';height:16px;width:16px;left:3px;bottom:3px;background:#fff;border-radius:50%;transition:.3s}
+.toggle-switch input:checked+.slider{background:var(--accent)}
+.toggle-switch input:checked+.slider:before{transform:translateX(16px)}
+@media(max-width:600px){
+  header{padding:20px 16px 0}
+  main{padding:20px 12px 40px}
+  .panel{padding:18px}
+  .btn-scan{flex:1;justify-content:center}
+  .news-grid{grid-template-columns:1fr}
+  .ai-name{min-width:110px}
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="logo-icon">📰</div>
+  <div>
+    <div class="logo-text">MakaleTara</div>
+    <div class="logo-sub">Web Haber Toplayıcı</div>
+  </div>
+</header>
+
+<main>
+  <!-- INPUT PANEL -->
+  <div class="panel">
+    <div class="panel-title">🌐 Web Siteleri</div>
+    <div class="url-list" id="urlList"></div>
+    <button class="btn-add" id="btnAdd">＋ Yeni site ekle</button>
+    <div class="actions">
+      <button class="btn-scan" id="btnScan">
+        <span id="scanIcon">🔍</span>
+        <span id="scanLabel">Tara</span>
+      </button>
+      <button class="btn-clear" id="btnClear">Sonuçları Temizle</button>
+      <div class="priority-row">
+        <label class="toggle-switch"><input type="checkbox" id="toggleAIPriority"/><span class="slider"></span></label>
+        <span class="priority-label" title="AI başarısız olursa RSS'e düşer">🤖 AI Öncelikli</span>
+        
+        <label class="toggle-switch" style="margin-left:16px"><input type="checkbox" id="toggleAIKapsamli"/><span class="slider"></span></label>
+        <span class="priority-label" title="Hem AI hem RSS aynı anda tarar, sonuçları birleştirir">🧠 Kapsamlı Mod (AI+RSS)</span>
+      </div>
+      <div class="priority-row" style="margin-top:8px">
+        <label class="toggle-switch"><input type="checkbox" id="toggleTranslate"/><span class="slider"></span></label>
+        <span class="priority-label">🌐 Çeviri Etkin</span>
+        <select id="translateLang" class="ai-key-input" style="margin-left:16px; width:auto; min-width:0; padding:4px 8px;">
+          <option value="tr">Türkçe (tr)</option>
+          <option value="en">English (en)</option>
+          <option value="de">Deutsch (de)</option>
+          <option value="fr">Français (fr)</option>
+          <option value="es">Español (es)</option>
+        </select>
+      </div>
+    </div>
+    <div class="kw-section">
+      <div class="kw-label">🏷 Anahtar Kelime Filtresi</div>
+      <div class="chip-area" id="chipArea">
+        <input class="chip-input" id="chipInput" placeholder="Kelime yaz, Enter ile ekle..."/>
+      </div>
+    </div>
+    <div class="settings-section">
+      <button class="settings-toggle-btn" id="settingsToggle">⚙️ AI Ayarları <span id="settingsArrow">▼</span></button>
+      <div class="settings-body" id="settingsBody" style="display:none">
+        <div class="ai-row">
+          <label class="toggle-switch"><input type="checkbox" id="toggleGemini"/><span class="slider"></span></label>
+          <span class="ai-name">Gemini 1.5 Flash</span>
+          <input type="password" class="ai-key-input" id="keyGemini" placeholder="AIza..."/>
+          <a href="https://ai.google.dev" target="_blank" class="key-link" title="Ücretsiz key al — ai.google.dev">🔑</a>
+        </div>
+        <div class="ai-row">
+          <label class="toggle-switch"><input type="checkbox" id="toggleGroq"/><span class="slider"></span></label>
+          <span class="ai-name">Groq (Llama 3.3)</span>
+          <input type="password" class="ai-key-input" id="keyGroq" placeholder="gsk_..."/>
+          <a href="https://console.groq.com" target="_blank" class="key-link" title="Ücretsiz key al — console.groq.com">🔑</a>
+        </div>
+        <div class="ai-row">
+          <label class="toggle-switch"><input type="checkbox" id="toggleOpenRouter"/><span class="slider"></span></label>
+          <span class="ai-name">OpenRouter (ücretsiz)</span>
+          <input type="password" class="ai-key-input" id="keyOpenRouter" placeholder="sk-or-... (opsiyonel)"/>
+          <a href="https://openrouter.ai" target="_blank" class="key-link" title="Key al — openrouter.ai">🔑</a>
+        </div>
+        <div class="settings-note">💡 AI; RSS ve scraping başarısız olduğunda son çare olarak devreye girer. Ayarlar otomatik kaydedilir.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- STATUS -->
+  <div class="status-bar" id="statusBar">
+    <div class="spinner"></div>
+    <div class="status-text" id="statusText">Taranıyor…</div>
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+  </div>
+
+  <!-- FILTER BAR -->
+  <div class="filter-bar" id="filterBar" style="display:none">
+    <input type="text" class="search-box" id="searchBox" placeholder="🔎  Makale ara…"/>
+    <select class="sort-filter" id="sortFilter">
+      <option value="date">En Yeni</option>
+      <option value="title">Başlığa Göre</option>
+      <option value="source">Kaynağa Göre</option>
+    </select>
+    <span class="result-count" id="resultCount"></span>
+  </div>
+
+  <!-- RESULTS -->
+  <div id="results"></div>
+</main>
+
+<div class="toast-container" id="toastContainer"></div>
+
+<script>
+const PROXIES=[
+  async u=>{const r=await fetch('https://api.allorigins.win/get?url='+encodeURIComponent(u),{signal:AbortSignal.timeout(12000)});if(!r.ok)throw new Error(r.status);return(await r.json()).contents||'';},
+  async u=>{const r=await fetch('https://corsproxy.io/?'+encodeURIComponent(u),{signal:AbortSignal.timeout(12000)});if(!r.ok)throw new Error(r.status);return await r.text();},
+  async u=>{const r=await fetch('https://api.codetabs.com/v1/proxy?quest='+encodeURIComponent(u),{signal:AbortSignal.timeout(12000)});if(!r.ok)throw new Error(r.status);return await r.text();}
+];
+const RSS_PATHS=['/feed','/feed.xml','/rss','/rss.xml','/atom.xml','/feed/rss','/feeds/posts/default','/?feed=rss2','/feeds/posts/default?alt=rss'];
+
+let allNews = [];
+let sourceColors = {};
+const COLORS = ['#6c63ff','#a78bfa','#06b6d4','#10b981','#f59e0b','#ec4899','#3b82f6','#8b5cf6'];
+let colorIdx = 0;
+
+// ── URL ROWS ─────────────────────────────────────────────
+const LS_KEY='makaletara_urls';
+
+function saveUrls(){
+  const urls=[...document.querySelectorAll('.url-input')].map(i=>i.value.trim()).filter(Boolean);
+  localStorage.setItem(LS_KEY,JSON.stringify(urls));
+}
+
+function addUrlRow(val='',focus=true){
+  const list=document.getElementById('urlList');
+  const row=document.createElement('div');
+  row.className='url-row';
+  row.innerHTML=`
+    <input type="url" class="url-input" placeholder="https://www.hurriyet.com.tr" value="${esc(val)}"/>
+    <button class="btn-remove" title="Kaldır">✕</button>`;
+  const input=row.querySelector('input');
+  row.querySelector('.btn-remove').onclick=()=>{row.remove();saveUrls();};
+  input.addEventListener('input',saveUrls);
+  input.addEventListener('blur',saveUrls);
+  list.appendChild(row);
+  if(focus) input.focus();
+}
+
+function loadSavedUrls(){
+  try{
+    const saved=JSON.parse(localStorage.getItem(LS_KEY)||'null');
+    if(Array.isArray(saved)&&saved.length>0){
+      saved.forEach(u=>addUrlRow(u,false));
+      return;
+    }
+  }catch(_){}
+  // defaults
+  addUrlRow('https://www.hurriyet.com.tr',false);
+  addUrlRow('https://www.ntv.com.tr',false);
+}
+
+document.getElementById('btnAdd').onclick=()=>{addUrlRow();saveUrls();};
+loadSavedUrls();
+
+// ── SCAN ─────────────────────────────────────────────────
+document.getElementById('btnScan').onclick=startScan;
+document.getElementById('btnClear').onclick=clearResults;
+
+async function startScan(){
+  const inputs=[...document.querySelectorAll('.url-input')].map(i=>i.value.trim()).filter(Boolean);
+  if(!inputs.length){toast('En az bir URL girin','error');return;}
+
+  allNews=[];
+  sourceColors={};
+  colorIdx=0;
+  clearResults();
+  setScanning(true);
+  setProgress(0);
+
+  const errors=[];
+  let completed=0;
+
+  setStatus(`<strong>${inputs.length}</strong> site paralel taranıyor...`);
+
+  await Promise.allSettled(inputs.map(async url=>{
+    try{
+      const items=await fetchSite(url);
+      allNews.push(...items);
+    }catch(e){
+      errors.push(url+': '+e.message);
+    }
+    completed++;
+    setProgress(Math.round((completed/inputs.length)*100));
+  }));
+
+  // Çeviri adımı
+  if(document.getElementById('toggleTranslate').checked && allNews.length > 0) {
+    const tLang = document.getElementById('translateLang').value;
+    await translateItems(allNews, tLang);
+  }
+
+  setScanning(false);
+  renderNews(allNews);
+  if(errors.length) errors.forEach(e=>toast(e,'error'));
+  if(allNews.length) toast(`${allNews.length} haber toplandı ✓`,'success');
+  else toast('Hiç haber bulunamadı','error');
+}
+
+async function fetchSite(url){
+  const base=baseUrl(url);
+  const aiPriority=document.getElementById('toggleAIPriority').checked;
+  const aiKapsamli=document.getElementById('toggleAIKapsamli').checked;
+
+  let mainHtml='';
+  try{ mainHtml=await fetchText(url); }catch(_){}
+
+  const runStandard = async () => {
+    const rssFromHtml=extractRssLinks(mainHtml,base);
+    const candidates=[...rssFromHtml,...knownRssPatterns(url),...RSS_PATHS.map(p=>base+p)];
+    try {
+      return await Promise.any(candidates.map(async target => {
+        const xml=await fetchText(target);
+        if(xml&&(xml.includes('<rss')||xml.includes('<feed')||xml.includes('<item')||xml.includes('<entry'))){
+          const items=parseXML(xml,target);
+          if(items.length>0) return items;
+        }
+        throw new Error('Not RSS');
+      }));
+    }catch(e){}
+    if(mainHtml&&(mainHtml.includes('<rss')||mainHtml.includes('<feed')||mainHtml.includes('<item'))){
+      const items=parseXML(mainHtml,url);
+      if(items.length>0) return items;
+    }
+    return mainHtml?scrapeHTML(mainHtml,url):[];
+  };
+
+  const runAI = async () => {
+    if(!mainHtml) return [];
+    return await tryAI(mainHtml,url);
+  };
+
+  // Kapsamlı Mod (Aynı anda hem AI hem standart, sonra tekilleştirme)
+  if(aiKapsamli){
+    const [std, ai] = await Promise.allSettled([runStandard(), runAI()]);
+    const r1 = std.status === 'fulfilled' ? std.value : [];
+    const r2 = ai.status === 'fulfilled' ? ai.value : [];
+    // AI sonuçlarını başa al ki öncelikli olsunlar (ayrıca hasAI bayrağını korur)
+    return deduplicateItems([...r2, ...r1]);
+  }
+
+  // AI Öncelikli Mod (Önce AI dener, başarısız olursa Standart)
+  if(aiPriority){
+    const aiItems = await runAI();
+    if(aiItems.length>0) return aiItems;
+  }
+
+  // Standart akış (Önce Standart, başarısız olursa AI)
+  const stdItems = await runStandard();
+  if(stdItems.length>0) return stdItems;
+
+  if(!aiPriority){
+    const aiItems = await runAI();
+    if(aiItems.length>0) return aiItems;
+  }
+
+  return [];
+}
+
+function normalizeUrl(url){
+  try {
+    const u = new URL(url);
+    return u.origin + u.pathname.replace(/\/$/, '');
+  } catch(e) {
+    return url.split('?')[0].replace(/\/$/, '');
+  }
+}
+
+function deduplicateItems(items){
+  const seen = new Set();
+  const res = [];
+  for(const i of items){
+    const norm = normalizeUrl(i.link);
+    if(!seen.has(norm)){
+      seen.add(norm);
+      res.push(i);
+    }
+  }
+  return res;
+}
+
+// ── TRANSLATION ──────────────────────────────────────────
+async function translateWithGoogle(text, targetLang) {
+  if(!text||!text.trim()) return { text: '', lang: targetLang };
+  try {
+    const q = encodeURIComponent(text);
+    const url = `https://translate.googleapis.com/translate_a/single?client=gtx&sl=auto&tl=${targetLang}&dt=t&q=${q}`;
+    // CORS aşmak için mevcut proxy listesini kullanıyoruz
+    const resText = await fetchText(url);
+    const data = JSON.parse(resText);
+    const translated = data[0].map(x => x[0]).join('');
+    const detectedLang = data[2];
+    return { text: translated, lang: detectedLang };
+  } catch(e) {
+    // Proxy'ler başarısız olursa Lingva API yedeği
+    try {
+      const lingvaUrl = `https://lingva.ml/api/v1/auto/${targetLang}/${encodeURIComponent(text)}`;
+      const lRes = await fetch(lingvaUrl);
+      const lData = await lRes.json();
+      return { text: lData.translation, lang: lData.info?.detectedSource || targetLang };
+    } catch(e2) {
+      return { text: text, lang: targetLang }; 
+    }
+  }
+}
+
+async function translateItems(items, targetLang) {
+  setStatus('Çeviriler yapılıyor... Lütfen bekleyin');
+  // API limitlerine takılmamak için 5'li gruplar halinde paralel çeviri
+  const chunkSize = 5;
+  for(let i=0; i<items.length; i+=chunkSize) {
+    const chunk = items.slice(i, i+chunkSize);
+    await Promise.all(chunk.map(async item => {
+      const combo = item.title + " |~| " + (item.desc || "");
+      const { text, lang } = await translateWithGoogle(combo, targetLang);
+      
+      // Tespit edilen dil hedef dilden farklıysa çevrildi kabul et
+      if(lang && !lang.toLowerCase().startsWith(targetLang.toLowerCase())) {
+        const parts = text.split(' |~| ');
+        item.title = (parts[0] || item.title).trim() + ' (çevirildi)';
+        item.desc = (parts[1] || item.desc).trim();
+      }
+    }));
+    setProgress(Math.round(((i + chunk.length) / items.length) * 100));
+  }
+}
+
+function knownRssPatterns(url){
+  const links=[];
+  const sd=url.match(/sciencedaily\.com\/news\/([^?#]+)/);
+  if(sd) links.push('https://www.sciencedaily.com/rss/'+sd[1].replace(/\/$/,'')+'.xml');
+  return links;
+}
+
+const AI_PROMPT=`Bu web sayfasının içeriğinden tüm makale ve haberleri çıkar. Sadece JSON döndür, başka hiçbir şey yazma:{"articles":[{"title":"başlık","summary":"2-3 cümle özet","url":"link"}]}`;
+
+function cleanForAI(html){
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi,'')
+    .replace(/<style[\s\S]*?<\/style>/gi,'')
+    .replace(/<nav[\s\S]*?<\/nav>/gi,'')
+    .replace(/<footer[\s\S]*?<\/footer>/gi,'')
+    .replace(/<header[\s\S]*?<\/header>/gi,'')
+    .replace(/<[^>]+>/g,' ')
+    .replace(/\s+/g,' ').trim()
+    .slice(0,28000);
+}
+
+function parseAiText(text,url,src,color){
+  const m=text.match(/\{[\s\S]*\}/);
+  if(!m) return [];
+  try{
+    const base=baseUrl(url);
+    return (JSON.parse(m[0]).articles||[]).map(a=>{
+      let link=a.url||'';
+      if(link.startsWith('/')) link=base+link;
+      if(!link.startsWith('http')) link=url;
+      return{title:(a.title||'').slice(0,120),link,desc:(a.summary||'').slice(0,400),date:0,source:src,color,aiGenerated:true};
+    }).filter(a=>a.title);
+  }catch{return [];}
+}
+
+async function callGemini(clean,url,src,color){
+  const key=(document.getElementById('keyGemini').value||'').trim();
+  if(!key) throw new Error('key yok');
+  const r=await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key='+key,{
+    method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify({contents:[{parts:[{text:AI_PROMPT+'\n\n'+clean}]}],generationConfig:{temperature:0.1,maxOutputTokens:4096}}),
+    signal:AbortSignal.timeout(30000)
+  });
+  if(!r.ok) throw new Error('Gemini '+r.status);
+  const d=await r.json();
+  return parseAiText(d.candidates?.[0]?.content?.parts?.[0]?.text||'',url,src,color);
+}
+
+async function callGroq(clean,url,src,color){
+  const key=(document.getElementById('keyGroq').value||'').trim();
+  if(!key) throw new Error('key yok');
+  const r=await fetch('https://api.groq.com/openai/v1/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+key},
+    body:JSON.stringify({model:'llama-3.3-70b-versatile',messages:[{role:'user',content:AI_PROMPT+'\n\n'+clean}],temperature:0.1,max_tokens:4096}),
+    signal:AbortSignal.timeout(30000)
+  });
+  if(!r.ok) throw new Error('Groq '+r.status);
+  const d=await r.json();
+  return parseAiText(d.choices?.[0]?.message?.content||'',url,src,color);
+}
+
+async function callOpenRouter(clean,url,src,color){
+  const key=(document.getElementById('keyOpenRouter').value||'').trim();
+  const headers={'Content-Type':'application/json','HTTP-Referer':'https://makaletara.local','X-Title':'MakaleTara'};
+  if(key) headers['Authorization']='Bearer '+key;
+  const r=await fetch('https://openrouter.ai/api/v1/chat/completions',{
+    method:'POST',headers,
+    body:JSON.stringify({model:'meta-llama/llama-3.2-3b-instruct:free',messages:[{role:'user',content:AI_PROMPT+'\n\n'+clean}]}),
+    signal:AbortSignal.timeout(30000)
+  });
+  if(!r.ok) throw new Error('OpenRouter '+r.status);
+  const d=await r.json();
+  return parseAiText(d.choices?.[0]?.message?.content||'',url,src,color);
+}
+
+async function tryAI(html,url){
+  const src=hostname(url);
+  if(!sourceColors[src]){sourceColors[src]=COLORS[colorIdx%COLORS.length];colorIdx++;}
+  const color=sourceColors[src];
+  const clean=cleanForAI(html);
+  
+  const providers=[
+    {id:'toggleGemini',fn:callGemini,name:'Gemini'},
+    {id:'toggleGroq',fn:callGroq,name:'Groq'},
+    {id:'toggleOpenRouter',fn:callOpenRouter,name:'OpenRouter'}
+  ].filter(p => document.getElementById(p.id)?.checked);
+
+  if(providers.length === 0) return [];
+
+  const names = providers.map(p => p.name).join(', ');
+  setStatus('<strong>'+src+'</strong> → AI analiz ediyor (' + names + ')…');
+
+  const allItems = [];
+  
+  await Promise.allSettled(providers.map(async p => {
+    try{
+      const items=await p.fn(clean,url,src,color);
+      if(items.length>0){
+        allItems.push(...items);
+        toast(p.name+' ile '+items.length+' makale bulundu','success');
+      }
+    }catch(e){console.warn(p.name+':',e.message);}
+  }));
+
+  return deduplicateItems(allItems);
+}
+
+// Extract RSS/Atom feed URLs declared in HTML <link> tags
+function extractRssLinks(html,base){
+  const links=[];
+  const re=/<link[^>]+rel=["']alternate["'][^>]*>/gi;
+  let m;
+  while((m=re.exec(html))!==null){
+    const tag=m[0];
+    if(!/rss|atom|feed/i.test(tag)) continue;
+    const hrefMatch=tag.match(/href=["']([^"']+)["']/);
+    if(!hrefMatch) continue;
+    let href=hrefMatch[1];
+    if(href.startsWith('/')) href=base+href;
+    if(href.startsWith('http')) links.push(href);
+  }
+  return links;
+}
+
+async function fetchText(url){
+  // Promise.any ile proxy'leri paralel dene, ilk cevap dönen kazanır
+  try{
+    return await Promise.any(PROXIES.map(proxy => proxy(url)));
+  }catch(e){
+    throw new Error('Tüm proxyler başarısız: CORS engelini aşamadık.');
+  }
+}
+
+function parseXML(text,sourceUrl){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(text,'application/xml');
+  const isAtom=!!doc.querySelector('feed');
+  const entries=isAtom?[...doc.querySelectorAll('entry')]:[...doc.querySelectorAll('item')];
+  const src=hostname(sourceUrl);
+  if(!sourceColors[src]){sourceColors[src]=COLORS[colorIdx%COLORS.length];colorIdx++;}
+
+  return entries.slice(0,40).map(e=>{
+    const title=text2(e,'title');
+    const link=isAtom?(e.querySelector('link')||{}).getAttribute('href')||text2(e,'link'):text2(e,'link')||(e.querySelector('guid')||{}).textContent||'';
+    const desc=stripHTML(text2(e,'description')||text2(e,'summary')||text2(e,'content')||'');
+    const date=text2(e,'pubDate')||text2(e,'published')||text2(e,'updated')||'';
+    return{title,link,desc:desc.slice(0,240),date:parseDate(date),source:src,color:sourceColors[src]};
+  }).filter(i=>i.title&&i.link);
+}
+
+function scrapeHTML(html,url){
+  const parser=new DOMParser();
+  const doc=parser.parseFromString(html,'text/html');
+  const src=hostname(url);
+  if(!sourceColors[src]){sourceColors[src]=COLORS[colorIdx%COLORS.length];colorIdx++;}
+  const color=sourceColors[src];
+  const base=baseUrl(url);
+  const seen=new Set();
+  const items=[];
+
+  // ── A) JSON-LD structured data (NewsArticle, Article) ─────
+  doc.querySelectorAll('script[type="application/ld+json"]').forEach(s=>{
+    try{
+      const data=JSON.parse(s.textContent||'{}');
+      const list=Array.isArray(data)?data:[data];
+      list.forEach(d=>{
+        const type=(d['@type']||'').toLowerCase();
+        if(!/article|newsarticle|blogposting|webpage/i.test(type)) return;
+        const title=d.headline||d.name||'';
+        let link=d.url||d.mainEntityOfPage?.['@id']||d.mainEntityOfPage||'';
+        if(typeof link!=='string') link='';
+        const desc=stripHTML(d.description||'').slice(0,240);
+        const date=d.datePublished||d.dateModified||'';
+        if(!title||!link||seen.has(link)) return;
+        if(link.startsWith('/')) link=base+link;
+        if(!link.startsWith('http')) return;
+        seen.add(link);
+        items.push({title:title.slice(0,120),link,desc,date:parseDate(date),source:src,color});
+      });
+    }catch(_){}
+  });
+
+  // ── B) Open Graph / meta tags for the page itself ─────────
+  // (useful when URL is an article page)
+  if(items.length===0){
+    const ogTitle=metaContent(doc,'og:title')||metaContent(doc,'twitter:title')||doc.title||'';
+    const ogDesc=stripHTML(metaContent(doc,'og:description')||metaContent(doc,'description')||'').slice(0,240);
+    const canonical=doc.querySelector('link[rel=canonical]')?.href||url;
+    if(ogTitle&&!seen.has(canonical)){
+      seen.add(canonical);
+      items.push({title:ogTitle.slice(0,120),link:canonical,desc:ogDesc,date:0,source:src,color});
+    }
+  }
+
+  // ── C) Heuristic link scraping ─────────────────────────────
+  const SKIP_NAV=new Set(['nav','header','footer','aside']);
+  // priority selectors → broad selectors
+  const selectors=[
+    // WordPress temaları
+    '.entry-title a','.post-title a','[class*="entry-title"] a',
+    '.jeg_post_title a','.td-module-title a','.mvp-blog-story-text h2 a',
+    // Genel makale/blog
+    'article h1 a','article h2 a','article h3 a',
+    '[class*="article"] h2 a','[class*="article"] h3 a',
+    '[class*="card"] h2 a','[class*="card"] h3 a',
+    '[class*="news"] h2 a','[class*="news"] h3 a',
+    // Drupal/ScienceDaily
+    '.field-title a','.views-field-title a',
+    '[class*="story"] a','[class*="headline"] a',
+    'h2 a','h3 a'
+  ];
+
+  for(const sel of selectors){
+    doc.querySelectorAll(sel).forEach(a=>{
+      if(items.length>=40) return;
+      // skip navigation areas
+      let el=a.parentElement;
+      while(el){
+        if(SKIP_NAV.has(el.tagName?.toLowerCase())) return;
+        el=el.parentElement;
+      }
+      const title=(a.textContent||'').replace(/\s+/g,' ').trim();
+      if(title.length<15||title.length>200) return;
+      // reject likely nav links (too many caps, no spaces)
+      if((title.match(/[A-ZÜÖÇŞİĞ]/g)||[]).length>title.length*0.6) return;
+      let href=a.getAttribute('href')||'';
+      if(!href||href==='#'||href.startsWith('javascript')) return;
+      if(href.startsWith('/')) href=base+href;
+      else if(!href.startsWith('http')) href=base+'/'+href;
+      if(seen.has(href)) return;
+      seen.add(href);
+      // extract description from surrounding context
+      const parent=a.closest('article')||a.closest('[class*="card"]')||a.closest('[class*="item"]')||a.parentElement;
+      let desc='';
+      if(parent){
+        // prefer a <p> that isn't the link itself
+        const p=[...parent.querySelectorAll('p')].find(p=>!p.contains(a));
+        if(p) desc=p.textContent.replace(/\s+/g,' ').trim().slice(0,240);
+      }
+      // try to find a date nearby
+      let date=0;
+      if(parent){
+        const timeEl=parent.querySelector('time');
+        if(timeEl) date=parseDate(timeEl.getAttribute('datetime')||timeEl.textContent);
+      }
+      items.push({title:title.slice(0,120),link:href,desc,date,source:src,color});
+    });
+    if(items.length>=40) break;
+  }
+  return items;
+}
+
+function metaContent(doc,name){
+  const sel=`meta[property="${name}"],meta[name="${name}"]`;
+  return doc.querySelector(sel)?.getAttribute('content')||'';
+}
+
+// ── RENDER (GROUPED) ─────────────────────────────────────
+function renderNews(news){
+  const results=document.getElementById('results');
+  const filterBar=document.getElementById('filterBar');
+  if(!news.length){
+    filterBar.style.display='none';
+    results.innerHTML='<div class="empty-state"><div class="empty-icon">🔍</div><div class="empty-title">Makale bulunamadı</div><div class="empty-desc">Farklı bir site deneyin veya AI ayarlarını etkinleştirin.</div></div>';
+    return;
+  }
+  filterBar.style.display='flex';
+  applyFilters();
+}
+
+function highlightKeyword(text, words){
+  if(!words||words.length===0) return esc(text);
+  let res = esc(text);
+  words.forEach(w=>{
+    if(w.length<2) return;
+    const re=new RegExp('('+esc(w).replace(/[-[\]{}()*+?.,\\^$|#\s]/g,'\\$&')+')','gi');
+    res=res.replace(re,'<span class="highlight">$1</span>');
+  });
+  return res;
+}
+
+function applyFilters(){
+  const q=(document.getElementById('searchBox').value||'').toLowerCase();
+  const sort=document.getElementById('sortFilter').value;
+  const keywords=kwList.map(k=>k.toLowerCase());
+
+  let filtered=allNews.filter(n=>{
+    if(q&&!n.title.toLowerCase().includes(q)&&!(n.desc||'').toLowerCase().includes(q)) return false;
+    if(keywords.length>0){
+       const t=n.title.toLowerCase();
+       const d=(n.desc||'').toLowerCase();
+       if(!keywords.some(k=>t.includes(k)||d.includes(k))) return false;
+    }
+    return true;
+  });
+  if(sort==='date') filtered.sort((a,b)=>(b.date||0)-(a.date||0));
+  else if(sort==='title') filtered.sort((a,b)=>a.title.localeCompare(b.title,'tr'));
+  else if(sort==='source') filtered.sort((a,b)=>a.source.localeCompare(b.source));
+  
+  document.getElementById('resultCount').textContent=filtered.length+' makale';
+  const results=document.getElementById('results');
+  if(!filtered.length){
+    results.innerHTML='<div class="empty-state"><div class="empty-icon">😔</div><div class="empty-title">Sonuç yok</div><div class="empty-desc">Arama kriterlerinizi değiştirin veya anahtar kelimeleri azaltın.</div></div>';
+    return;
+  }
+  
+  // Group by source
+  const groups={};
+  filtered.forEach(n=>{
+    if(!groups[n.source]) groups[n.source]=[];
+    groups[n.source].push(n);
+  });
+  results.innerHTML='';
+  
+  // Anahtar kelime aramasını kolaylaştırmak için orijinal case koruyan vurgulama
+  Object.entries(groups).forEach(([src,items])=>{
+    const color=sourceColors[src]||'var(--accent)';
+    const hasAI=items.some(i=>i.aiGenerated);
+    const section=document.createElement('div');
+    section.className='source-section';
+    const hdr=document.createElement('div');
+    hdr.className='source-header';
+    hdr.style.borderLeftColor=color;
+    hdr.innerHTML='🗂 <span class="source-title">'+src+'</span>'
+      +'<span class="source-badge">'+items.length+' makale gösteriliyor</span>'
+      +(hasAI?'<span class="ai-badge">🤖 AI</span>':'');
+    const grid=document.createElement('div');
+    grid.className='news-grid';
+    items.forEach((n,i)=>{
+      const card=document.createElement('a');
+      card.className='news-card';
+      card.href=n.link;
+      card.target='_blank';
+      card.rel='noopener noreferrer';
+      card.style.animationDelay=(i*25)+'ms';
+      card.innerHTML=
+        '<div class="card-source-bar" style="background:linear-gradient(90deg,'+n.color+','+n.color+'88)"></div>'
+        +'<div class="card-body">'
+        +(n.date?'<div class="card-date">'+formatDate(n.date)+'</div>':'')
+        +'<div class="card-title">'+highlightKeyword(n.title,keywords)+'</div>'
+        +(n.desc?'<div class="card-desc">'+highlightKeyword(n.desc,keywords)+'</div>':'')
+        +'</div>'
+        +'<div class="card-footer"><span class="card-link">Makaleyi oku <span class="card-arrow">→</span></span></div>';
+      grid.appendChild(card);
+    });
+    section.appendChild(hdr);
+    section.appendChild(grid);
+    results.appendChild(section);
+  });
+}
+
+document.getElementById('searchBox').addEventListener('input',applyFilters);
+document.getElementById('sortFilter').addEventListener('change',applyFilters);
+
+// ── KEYWORDS ────────────────────────────────────────────
+let kwList = [];
+const chipArea = document.getElementById('chipArea');
+const chipInput = document.getElementById('chipInput');
+
+function renderChips(){
+  chipArea.querySelectorAll('.chip').forEach(c=>c.remove());
+  kwList.forEach((kw,i)=>{
+    const span=document.createElement('span');
+    span.className='chip';
+    span.innerHTML=esc(kw)+'<span class="chip-del" data-idx="'+i+'">×</span>';
+    chipArea.insertBefore(span,chipInput);
+  });
+  localStorage.setItem('ai_keywords',JSON.stringify(kwList));
+  if(allNews.length>0) applyFilters();
+}
+
+chipArea.addEventListener('click',e=>{
+  if(e.target.classList.contains('chip-del')){
+    kwList.splice(e.target.dataset.idx,1);
+    renderChips();
+  } else {
+    chipInput.focus();
+  }
+});
+
+chipInput.addEventListener('keydown',e=>{
+  if(e.key==='Enter'||e.key===','){
+    e.preventDefault();
+    const val=chipInput.value.trim().replace(/,$/,'');
+    if(val&&!kwList.includes(val)){
+      kwList.push(val);
+      chipInput.value='';
+      renderChips();
+    }
+  } else if(e.key==='Backspace'&&!chipInput.value&&kwList.length>0){
+    kwList.pop();
+    renderChips();
+  }
+});
+
+chipInput.addEventListener('blur',()=>{
+  const val=chipInput.value.trim().replace(/,$/,'');
+  if(val&&!kwList.includes(val)){
+    kwList.push(val);
+    chipInput.value='';
+    renderChips();
+  }
+});
+
+try{
+  const storedKw = JSON.parse(localStorage.getItem('ai_keywords'));
+  if(Array.isArray(storedKw)) {
+      kwList = storedKw;
+      renderChips();
+  }
+}catch(e){}
+
+// ── SETTINGS ────────────────────────────────────────────
+document.getElementById('settingsToggle').addEventListener('click',()=>{
+  const b=document.getElementById('settingsBody');
+  const a=document.getElementById('settingsArrow');
+  const open=b.style.display==='none';
+  b.style.display=open?'flex':'none';
+  a.textContent=open?'▲':'▼';
+});
+
+function loadSettings(){
+  ['Gemini','Groq','OpenRouter'].forEach(n=>{
+    const t=document.getElementById('toggle'+n);
+    const k=document.getElementById('key'+n);
+    if(t) t.checked=localStorage.getItem('ai_toggle_'+n)==='1';
+    if(k) k.value=localStorage.getItem('ai_key_'+n)||'';
+    if(t) t.addEventListener('change',()=>localStorage.setItem('ai_toggle_'+n,t.checked?'1':'0'));
+    if(k) k.addEventListener('blur',()=>localStorage.setItem('ai_key_'+n,k.value.trim()));
+  });
+  const ap=document.getElementById('toggleAIPriority');
+  if(ap) ap.checked=localStorage.getItem('ai_priority')==='1';
+  if(ap) ap.addEventListener('change',()=>localStorage.setItem('ai_priority',ap.checked?'1':'0'));
+
+  const ak=document.getElementById('toggleAIKapsamli');
+  if(ak) ak.checked=localStorage.getItem('ai_kapsamli')==='1';
+  if(ak) ak.addEventListener('change',()=>localStorage.setItem('ai_kapsamli',ak.checked?'1':'0'));
+
+  const tt=document.getElementById('toggleTranslate');
+  if(tt) tt.checked=localStorage.getItem('translate_enabled')==='1';
+  if(tt) tt.addEventListener('change',()=>localStorage.setItem('translate_enabled',tt.checked?'1':'0'));
+
+  const tl=document.getElementById('translateLang');
+  if(tl) tl.value=localStorage.getItem('translate_lang')||'tr';
+  if(tl) tl.addEventListener('change',()=>localStorage.setItem('translate_lang',tl.value));
+}
+loadSettings();
+
+// ── HELPERS ───────────────────────────────────────────────
+function clearResults(){
+  document.getElementById('results').innerHTML='';
+  document.getElementById('filterBar').style.display='none';
+}
+
+function setScanning(on){
+  const btn=document.getElementById('btnScan');
+  document.getElementById('scanLabel').textContent=on?'Taranıyor…':'Tara';
+  document.getElementById('scanIcon').textContent=on?'⏳':'🔍';
+  btn.disabled=on;
+  document.getElementById('statusBar').classList.toggle('active',on);
+}
+
+function setProgress(p){document.getElementById('progressFill').style.width=p+'%'}
+function setStatus(html){document.getElementById('statusText').innerHTML=html}
+
+function hostname(url){try{return new URL(url).hostname.replace('www.','')}catch{return url}}
+function baseUrl(url){try{const u=new URL(url);return u.origin}catch{return url}}
+
+function text2(el,tag){
+  const n=el.querySelector(tag);
+  if(!n) return '';
+  return (n.textContent||n.getAttribute('url')||'').trim();
+}
+
+function stripHTML(s){return s.replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').trim()}
+
+function parseDate(s){
+  if(!s) return 0;
+  const d=new Date(s);
+  return isNaN(d.getTime())?0:d.getTime();
+}
+
+function formatDate(ts){
+  if(!ts) return '';
+  const d=new Date(ts);
+  const now=Date.now();
+  const diff=now-ts;
+  if(diff<3600000) return Math.floor(diff/60000)+' dk önce';
+  if(diff<86400000) return Math.floor(diff/3600000)+' sa önce';
+  return d.toLocaleDateString('tr-TR',{day:'numeric',month:'short'});
+}
+
+function esc(s){return s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+function toast(msg,type='success'){
+  const c=document.getElementById('toastContainer');
+  const t=document.createElement('div');
+  t.className='toast '+type;
+  t.innerHTML=(type==='success'?'✅ ':'❌ ')+msg;
+  c.appendChild(t);
+  setTimeout(()=>{t.style.opacity='0';t.style.transition='opacity .4s';setTimeout(()=>t.remove(),400)},4000);
+}
+</script>
+</body>
+</html>
